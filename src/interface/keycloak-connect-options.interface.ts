@@ -20,11 +20,11 @@ export interface MultiTenantOptions {
   /**
    * The realm resolver function.
    */
-  realmResolver: (request: any) => Promise<string> | string;
+  realmResolver: (request: any) => Promise<string>;
   /**
    * The realm secret resolver function.
    */
-  realmSecretResolver?: (realm: string) => Promise<string> | string;
+  realmSecretResolver?: (realm: string) => Promise<Partial<KeycloakConnectConfig>>;
 }
 
 /**
