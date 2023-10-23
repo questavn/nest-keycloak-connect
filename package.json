@@ -8,8 +8,6 @@
     "start:dev": "tsc -w",
     "clean": "rimraf dist",
     "build": "tsc",
-    "release": "release-it",
-    "release:alpha": "release-it --preReleaseId=alpha --npm.tag=next --github.preRelease",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint ./src --ext .ts"
   },
