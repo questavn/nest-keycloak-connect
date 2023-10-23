@@ -13,7 +13,7 @@ export class KeycloakMultiTenantService {
   constructor(
     @Inject(KEYCLOAK_CONNECT_OPTIONS)
     private keycloakOpts: KeycloakConnectOptions,
-  ) {}
+  ) { }
 
   /**
    * Clears the cached Keycloak instances.
@@ -45,7 +45,7 @@ export class KeycloakMultiTenantService {
     if (this.instances.has(realm)) {
       if (this.keycloakOpts.multiTenant.resolveAlways) {
         const keycloak: any = this.instances.get(realm);
-        const secret = await this.resolveSecret(realm);
+        const { secret } = await this.resolveConfig(realm);
 
         keycloak.config.secret = secret;
         keycloak.grantManager.secret = secret;
@@ -57,12 +57,13 @@ export class KeycloakMultiTenantService {
       }
       return this.instances.get(realm);
     } else {
-      const secret = await this.resolveSecret(realm);
+      const { secret, authServerUrl } = await this.resolveConfig(realm);
       // TODO: Repeating code from  provider, will need to rework this in 2.0
       // Override realm and secret
       const keycloakOpts: any = Object.assign(this.keycloakOpts, {
         realm,
         secret,
+        authServerUrl,
       });
       const keycloak: any = new KeycloakConnect({}, keycloakOpts);
 
@@ -77,7 +78,7 @@ export class KeycloakMultiTenantService {
     }
   }
 
-  async resolveSecret(realm: string): Promise<string> {
+  async resolveConfig(realm: string): Promise<{ secret: string, authServerUrl: string }> {
     if (typeof this.keycloakOpts === 'string') {
       throw new Error(
         'Keycloak configuration is a configuration path. This should not happen after module load.',
@@ -93,16 +94,12 @@ export class KeycloakMultiTenantService {
     }
 
     // Resolve realm secret
-    const resolvedRealmSecret = this.keycloakOpts.multiTenant.realmSecretResolver(
+    const { secret, authServerUrl } = await this.keycloakOpts.multiTenant.realmSecretResolver(
       realm,
     );
-    const realmSecret =
-      resolvedRealmSecret || resolvedRealmSecret instanceof Promise
-        ? await resolvedRealmSecret
-        : resolvedRealmSecret;
 
     // Override secret
     // Order of priority: resolved realm secret > default global secret
-    return realmSecret || this.keycloakOpts.secret;
+    return { secret: secret || this.keycloakOpts.secret, authServerUrl: authServerUrl || this.keycloakOpts.authServerUrl };
   }
 }
